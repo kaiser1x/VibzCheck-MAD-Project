@@ -1,0 +1,62 @@
+name: vibzcheck
+description: "VibzCheck — collaborative music streaming with shared sessions, voting, chat, and mood-based recommendations."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase core + services
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.3
+  firebase_messaging: ^15.1.3
+  cloud_functions: ^5.1.3
+
+  # State management
+  provider: ^6.1.2
+
+  # Navigation
+  go_router: ^14.2.7
+
+  # UI / utilities
+  cupertino_icons: ^1.0.8
+  cached_network_image: ^3.4.1
+  timeago: ^3.7.0
+  shimmer: ^3.0.0
+  fluttertoast: ^8.2.8
+  url_launcher: ^6.3.0
+
+  # HTTP (Spotify via Cloud Functions)
+  http: ^1.2.2
+
+  # Local storage / caching
+  shared_preferences: ^2.3.2
+
+  # Image picker (profile photo)
+  image_picker: ^1.1.2
+
+  # UUID generation
+  uuid: ^4.4.2
+
+  # Equatable (model equality)
+  equatable: ^2.0.5
+
+  # Date formatting
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/animations/
