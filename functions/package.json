@@ -1,0 +1,18 @@
+{
+  "name": "vibzcheck-functions",
+  "description": "VibzCheck Cloud Functions — Spotify proxy",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": { "node": "18" },
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.6.7",
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.6.0"
+  },
+  "private": true
+}
