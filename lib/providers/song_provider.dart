@@ -16,6 +16,7 @@ class SongProvider extends ChangeNotifier {
   bool _searching = false;
   String? _error;
   StreamSubscription<List<SongModel>>? _sub;
+  Timer? _debounce;
 
   List<SongModel> get songs => _songs;
   List<SpotifyTrack> get searchResults => _searchResults;
@@ -69,7 +70,6 @@ class SongProvider extends ChangeNotifier {
         userId: userId,
         value: value,
       );
-      // Refresh this user's vote state for the song.
       _userVotes[songId] =
           await _fs.getUserVote(sessionId, songId, userId);
       notifyListeners();
@@ -92,25 +92,31 @@ class SongProvider extends ChangeNotifier {
     await _fs.addMoodTagToSong(sessionId, songId, tag);
   }
 
+  /// Debounced Spotify search — waits 400 ms after the last keystroke
+  /// before firing a Cloud Function request.
   Future<void> searchSpotify(String query) async {
+    _debounce?.cancel();
     if (query.trim().isEmpty) {
       _searchResults = [];
       notifyListeners();
       return;
     }
-    _searching = true;
-    notifyListeners();
-    try {
-      _searchResults = await _spotify.searchTracks(query);
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _searching = false;
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      _searching = true;
       notifyListeners();
-    }
+      try {
+        _searchResults = await _spotify.searchTracks(query);
+      } catch (e) {
+        _error = e.toString();
+      } finally {
+        _searching = false;
+        notifyListeners();
+      }
+    });
   }
 
   void clearSearch() {
+    _debounce?.cancel();
     _searchResults = [];
     notifyListeners();
   }
@@ -122,6 +128,7 @@ class SongProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _sub?.cancel();
     super.dispose();
   }
