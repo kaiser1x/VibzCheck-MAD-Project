@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // Vote doc ID must be {userId}_{songId}.
+    // This regex check prevents a user from writing a vote on behalf of
+    // someone else, and pairs with the transaction logic in FirestoreService.
+    function validVoteId(voteId) {
+      return voteId.matches(request.auth.uid + '_[^_]+');
+    }
+
+    // ── users ─────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read:  if isAuth();
+      allow write: if isOwner(userId);
+    }
+
+    // ── sessions ──────────────────────────────────────────────────────────────
+    match /sessions/{sessionId} {
+      allow read:   if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth();
+      // Only the host can delete a session
+      allow delete: if isAuth() &&
+                       resource.data.hostId == request.auth.uid;
+
+      // songs sub-collection
+      match /songs/{songId} {
+        allow read:   if isAuth();
+        allow create: if isAuth();
+        allow update: if isAuth(); // vote count updated via transaction
+        allow delete: if isAuth() &&
+                         resource.data.addedBy == request.auth.uid;
+      }
+
+      // votes sub-collection — doc ID enforces one vote per user per song
+      match /votes/{voteId} {
+        allow read:   if isAuth();
+        allow create: if isAuth() && validVoteId(voteId);
+        allow update: if isAuth() && validVoteId(voteId);
+        allow delete: if false; // votes are permanent; toggle is handled in app
+      }
+
+      // messages sub-collection
+      match /messages/{messageId} {
+        allow read:   if isAuth();
+        allow create: if isAuth() &&
+                         request.resource.data.userId == request.auth.uid;
+        allow update: if false; // messages are immutable
+        allow delete: if false;
+      }
+    }
+
+    // ── recommendations (top-level) ───────────────────────────────────────────
+    // Written by RecommendationService on the client after scoring.
+    // Read by any authenticated user.
+    match /recommendations/{recId} {
+      allow read:   if isAuth();
+      allow create: if isAuth();
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
