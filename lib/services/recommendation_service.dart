@@ -24,7 +24,11 @@ class RecommendationService {
     required List<String> groupListeningHistory, // spotifyTrackIds
   }) async {
     // Score existing session songs and pick top artists/tracks as seeds.
-    final scored = _scoreSongs(sessionSongs, currentMood, groupListeningHistory);
+    final scored = _scoreSongs(
+      sessionSongs,
+      currentMood,
+      groupListeningHistory,
+    );
 
     // Persist updated scores back to Firestore.
     final batch = _db.batch();
@@ -56,27 +60,28 @@ class RecommendationService {
     );
 
     // Build RecommendationModel list with score breakdown + explanation.
-    final recommendations = spotifyTracks.map((track) {
-      final breakdown = _scoreSpotifyTrack(
-        track: track,
-        currentMood: currentMood,
-        sessionSongs: sessionSongs,
-        groupListeningHistory: groupListeningHistory,
-      );
-      return RecommendationModel(
-        recommendationId: _uuid.v4(),
-        sessionId: sessionId,
-        spotifyTrackId: track.trackId,
-        title: track.title,
-        artist: track.artist,
-        albumImageUrl: track.albumImageUrl,
-        scoreBreakdown: breakdown,
-        reason: _buildReason(breakdown, track.artist, currentMood),
-        createdAt: DateTime.now(),
-      );
-    }).toList()
-      ..sort((a, b) =>
-          b.scoreBreakdown.total.compareTo(a.scoreBreakdown.total));
+    final recommendations =
+        spotifyTracks.map((track) {
+          final breakdown = _scoreSpotifyTrack(
+            track: track,
+            currentMood: currentMood,
+            sessionSongs: sessionSongs,
+            groupListeningHistory: groupListeningHistory,
+          );
+          return RecommendationModel(
+            recommendationId: _uuid.v4(),
+            sessionId: sessionId,
+            spotifyTrackId: track.trackId,
+            title: track.title,
+            artist: track.artist,
+            albumImageUrl: track.albumImageUrl,
+            scoreBreakdown: breakdown,
+            reason: _buildReason(breakdown, track.artist, currentMood),
+            createdAt: DateTime.now(),
+          );
+        }).toList()..sort(
+          (a, b) => b.scoreBreakdown.total.compareTo(a.scoreBreakdown.total),
+        );
 
     // Persist top recommendations.
     final recBatch = _db.batch();
@@ -99,7 +104,9 @@ class RecommendationService {
   ) {
     if (songs.isEmpty) return {};
 
-    final maxVotes = songs.map((s) => s.voteCount).reduce((a, b) => a > b ? a : b);
+    final maxVotes = songs
+        .map((s) => s.voteCount)
+        .reduce((a, b) => a > b ? a : b);
 
     return {
       for (final song in songs)
@@ -109,7 +116,7 @@ class RecommendationService {
           moodTags: song.moodTags,
           currentMood: mood,
           inHistory: history.contains(song.spotifyTrackId),
-        )
+        ),
     };
   }
 
@@ -124,7 +131,8 @@ class RecommendationService {
 
     // Check if any session song shares the same artist (loose match).
     final artistMatch = sessionSongs.any(
-      (s) => s.artist.toLowerCase().contains(track.artist.toLowerCase()) ||
+      (s) =>
+          s.artist.toLowerCase().contains(track.artist.toLowerCase()) ||
           track.artist.toLowerCase().contains(s.artist.toLowerCase()),
     );
 
@@ -144,13 +152,16 @@ class RecommendationService {
     required SessionMood currentMood,
     required bool inHistory,
   }) {
-    final voteScore = maxVotes > 0 ? (voteCount / maxVotes).clamp(0.0, 1.0) : 0.0;
+    final voteScore = maxVotes > 0
+        ? (voteCount / maxVotes).clamp(0.0, 1.0)
+        : 0.0;
     final listeningScore = inHistory ? 1.0 : 0.0;
-    final moodScore =
-        moodTags.contains(currentMood.name) ? 1.0 : 0.0;
+    final moodScore = moodTags.contains(currentMood.name) ? 1.0 : 0.0;
 
     final total =
-        (voteScore * _wVote) + (listeningScore * _wHistory) + (moodScore * _wMood);
+        (voteScore * _wVote) +
+        (listeningScore * _wHistory) +
+        (moodScore * _wMood);
 
     return ScoreBreakdown(
       voteScore: voteScore,
@@ -160,11 +171,7 @@ class RecommendationService {
     );
   }
 
-  String _buildReason(
-    ScoreBreakdown b,
-    String artist,
-    SessionMood mood,
-  ) {
+  String _buildReason(ScoreBreakdown b, String artist, SessionMood mood) {
     final parts = <String>[];
 
     if (b.listeningScore > 0) {
