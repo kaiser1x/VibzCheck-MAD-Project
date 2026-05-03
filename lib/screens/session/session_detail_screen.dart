@@ -21,20 +21,23 @@ class SessionDetailScreen extends StatefulWidget {
 
 class _SessionDetailScreenState extends State<SessionDetailScreen> {
   int _tab = 0; // 0=playlist, 1=chat, 2=recommendations
+  bool _leftExplicitly = false;
 
   @override
   void initState() {
     super.initState();
     final uid = context.read<AuthProvider>().user?.uid ?? '';
     context.read<SongProvider>().listenToSongs(widget.sessionId);
-    // Ensure the user is listed as active in this session.
     context.read<SessionProvider>().joinSession(widget.sessionId, uid);
   }
 
   @override
   void dispose() {
-    final uid = context.read<AuthProvider>().user?.uid ?? '';
-    context.read<SessionProvider>().leaveSession(uid);
+    // Only auto-leave if the user didn't already leave via the button.
+    if (!_leftExplicitly) {
+      final uid = context.read<AuthProvider>().user?.uid ?? '';
+      context.read<SessionProvider>().leaveSession(uid);
+    }
     super.dispose();
   }
 
@@ -164,6 +167,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              _leftExplicitly = true;
               final uid = context.read<AuthProvider>().user?.uid ?? '';
               await context.read<SessionProvider>().leaveSession(uid);
               if (context.mounted) context.go('/home');

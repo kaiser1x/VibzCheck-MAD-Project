@@ -22,10 +22,17 @@ class SessionProvider extends ChangeNotifier {
 
   void listenToSessions(String uid) {
     _sessionsSub?.cancel();
-    _sessionsSub = _service.sessionsStream(uid).listen((list) {
-      _sessions = list;
-      notifyListeners();
-    });
+    _sessionsSub = _service.sessionsStream(uid).listen(
+      (list) {
+        _sessions = list;
+        _error = null;
+        notifyListeners();
+      },
+      onError: (e) {
+        _error = e.toString();
+        notifyListeners();
+      },
+    );
   }
 
   // ── Current session — real-time so mood/activeUsers stay in sync ───────────
