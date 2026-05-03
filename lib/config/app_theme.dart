@@ -4,15 +4,18 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get dark => ThemeData(
+  static Color _onAccent(Color accent) =>
+      accent.computeLuminance() > 0.179 ? Colors.black : Colors.white;
+
+  static ThemeData buildDark(Color accent) => ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        colorScheme: const ColorScheme.dark(
-          primary: AppColors.primary,
-          secondary: AppColors.primaryDark,
+        colorScheme: ColorScheme.dark(
+          primary: accent,
+          secondary: accent,
           surface: AppColors.surface,
           error: AppColors.error,
-          onPrimary: Colors.black,
+          onPrimary: _onAccent(accent),
           onSurface: AppColors.onSurface,
         ),
         scaffoldBackgroundColor: AppColors.background,
@@ -42,12 +45,13 @@ class AppTheme {
             borderSide: BorderSide.none,
           ),
           hintStyle: const TextStyle(color: AppColors.onSurfaceMuted),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.black,
+            backgroundColor: accent,
+            foregroundColor: _onAccent(accent),
             minimumSize: const Size(double.infinity, 50),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(25),
@@ -59,14 +63,16 @@ class AppTheme {
           ),
         ),
         textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+          style: TextButton.styleFrom(foregroundColor: accent),
         ),
         chipTheme: ChipThemeData(
           backgroundColor: AppColors.surfaceVariant,
-          selectedColor: AppColors.primary,
-          labelStyle: const TextStyle(color: AppColors.onSurface, fontSize: 12),
+          selectedColor: accent,
+          labelStyle:
+              const TextStyle(color: AppColors.onSurface, fontSize: 12),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),
         dividerTheme: const DividerThemeData(
           color: AppColors.surfaceVariant,

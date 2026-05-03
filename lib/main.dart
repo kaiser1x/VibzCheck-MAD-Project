@@ -10,6 +10,7 @@ import 'providers/chat_provider.dart';
 import 'providers/recommendation_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/song_provider.dart';
+import 'providers/theme_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,7 @@ class _BootstrapState extends State<_Bootstrap> {
         }
         return MultiProvider(
           providers: [
+            ChangeNotifierProvider(create: (_) => ThemeProvider()),
             ChangeNotifierProvider(create: (_) => AuthProvider()),
             ChangeNotifierProvider(create: (_) => SessionProvider()),
             ChangeNotifierProvider(create: (_) => SongProvider()),

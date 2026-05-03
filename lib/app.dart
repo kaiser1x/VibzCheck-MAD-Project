@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'config/app_theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -90,10 +91,11 @@ class _VibzCheckAppState extends State<VibzCheckApp> {
     // Watching AuthProvider rebuilds this widget on every auth change,
     // which triggers GoRouter to re-run redirect() via refreshListenable.
     context.watch<AuthProvider>();
+    final accent = context.watch<ThemeProvider>().accent;
     return MaterialApp.router(
       title: 'VibzCheck',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
+      theme: AppTheme.buildDark(accent),
       routerConfig: _router!,
     );
   }
