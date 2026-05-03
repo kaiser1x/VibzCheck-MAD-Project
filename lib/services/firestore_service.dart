@@ -35,6 +35,15 @@ class FirestoreService {
       .snapshots()
       .map((s) => s.docs.map(SessionModel.fromFirestore).toList());
 
+  /// Real-time stream for a single session document.
+  /// Used by SessionProvider to keep [current] in sync with remote changes
+  /// (e.g. when another user changes the mood).
+  Stream<SessionModel?> sessionStream(String sessionId) => _db
+      .collection('sessions')
+      .doc(sessionId)
+      .snapshots()
+      .map((doc) => doc.exists ? SessionModel.fromFirestore(doc) : null);
+
   Future<SessionModel?> fetchSession(String sessionId) async {
     final doc = await _db.collection('sessions').doc(sessionId).get();
     if (!doc.exists) return null;
@@ -127,7 +136,9 @@ class FirestoreService {
 
   // ─── Votes ─────────────────────────────────────────────────────────────────
 
-  // Use a transaction to prevent race conditions when multiple users vote.
+  /// Uses a transaction to prevent race conditions when multiple users vote
+  /// simultaneously.  Doc ID is {userId}_{songId} enforcing one vote per user
+  /// per song at the database level (matches Firestore security rules).
   Future<void> castVote({
     required String sessionId,
     required String songId,
@@ -153,11 +164,11 @@ class FirestoreService {
       if (existing.exists) {
         final prev = (existing.data()!['voteValue'] as num).toInt();
         if (prev == value) {
-          // Toggling off: remove vote and reverse delta
+          // Toggling same vote off: remove and reverse
           tx.delete(voteRef);
           delta = -prev;
         } else {
-          // Switching vote direction: net change is 2× value
+          // Switching direction: net change is 2× value
           tx.set(voteRef, {
             'userId': userId,
             'songId': songId,
