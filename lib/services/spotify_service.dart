@@ -1,11 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-// TODO: After deploying Cloud Functions, replace with your real URL:
-// https://us-central1-<YOUR_PROJECT_ID>.cloudfunctions.net
-const _functionsBase =
-    'https://us-central1-TODO_PROJECT_ID.cloudfunctions.net';
+import '../config/app_config.dart';
 
 class SpotifyTrack {
   final String trackId;
@@ -41,7 +37,8 @@ class SpotifyService {
   Future<List<SpotifyTrack>> searchTracks(String query) async {
     try {
       final uri = Uri.parse(
-          '$_functionsBase/spotifySearch?q=${Uri.encodeComponent(query)}');
+        '${AppConfig.spotifySearchEndpoint}?q=${Uri.encodeComponent(query)}',
+      );
       final resp = await http.get(uri).timeout(const Duration(seconds: 10));
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -68,7 +65,7 @@ class SpotifyService {
         if (seedArtists.isNotEmpty) 'seed_artists': seedArtists.join(','),
         if (seedTracks.isNotEmpty) 'seed_tracks': seedTracks.join(','),
       };
-      final uri = Uri.parse('$_functionsBase/spotifyRecommend')
+      final uri = Uri.parse(AppConfig.spotifyRecommendEndpoint)
           .replace(queryParameters: params);
       final resp = await http.get(uri).timeout(const Duration(seconds: 10));
       if (resp.statusCode == 200) {
@@ -84,13 +81,14 @@ class SpotifyService {
     }
   }
 
-  // Fallback: search existing songs in Firestore when Spotify is down.
+  // Fallback: search existing songs in Firestore when Spotify is unreachable.
+  // Uses \uf8ff as the upper bound for a Firestore prefix query.
   Future<List<SpotifyTrack>> _cachedSearch(String query) async {
     try {
       final snap = await _db
           .collectionGroup('songs')
           .where('title', isGreaterThanOrEqualTo: query)
-          .where('title', isLessThanOrEqualTo: '$query')
+          .where('title', isLessThan: '$query\uf8ff')
           .limit(10)
           .get();
       return snap.docs.map((d) {
@@ -108,7 +106,7 @@ class SpotifyService {
     }
   }
 
-  // Demo-safe hardcoded tracks when Spotify creds are not yet configured.
+  // Demo-safe hardcoded tracks used when Spotify creds are not yet configured.
   List<SpotifyTrack> _mockTracks(String hint) => const [
         SpotifyTrack(
           trackId: 'mock_1',
