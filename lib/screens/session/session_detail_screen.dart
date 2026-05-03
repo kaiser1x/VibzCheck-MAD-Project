@@ -162,7 +162,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
             onPressed: () async {
               Navigator.pop(ctx);
               final uid = context.read<AuthProvider>().user?.uid ?? '';
-              await context.read<SessionProvider>().leaveSession(uid);
+              await context.read<SessionProvider>().leaveSession(widget.sessionId, uid);
               if (context.mounted) context.go('/home');
             },
             child: const Text('Leave',

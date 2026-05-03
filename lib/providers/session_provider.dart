@@ -91,13 +91,14 @@ class SessionProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> leaveSession(String uid) async {
-    if (_current == null) return;
-    await _service.leaveSession(_current!.sessionId, uid);
-    _currentSub?.cancel();
-    _currentSub = null;
-    _current = null;
-    notifyListeners();
+  Future<void> leaveSession(String sessionId, String uid) async {
+    await _service.leaveSession(sessionId, uid);
+    if (_current?.sessionId == sessionId) {
+      _currentSub?.cancel();
+      _currentSub = null;
+      _current = null;
+      notifyListeners();
+    }
   }
 
   Future<void> updateMood(SessionMood mood) async {
