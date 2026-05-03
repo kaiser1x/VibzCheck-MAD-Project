@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -17,9 +18,11 @@ class AddSongScreen extends StatefulWidget {
 
 class _AddSongScreenState extends State<AddSongScreen> {
   final _searchCtrl = TextEditingController();
+  Timer? _debounce;
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -66,8 +69,12 @@ class _AddSongScreenState extends State<AddSongScreen> {
                       )
                     : null,
               ),
-              onChanged: (q) =>
-                  context.read<SongProvider>().searchSpotify(q),
+              onChanged: (q) {
+                _debounce?.cancel();
+                _debounce = Timer(const Duration(milliseconds: 800), () {
+                  context.read<SongProvider>().searchSpotify(q);
+                });
+              },
             ),
           ),
           Expanded(
@@ -77,7 +84,9 @@ class _AddSongScreenState extends State<AddSongScreen> {
                     ? AppEmptyState(
                         message: _searchCtrl.text.isEmpty
                             ? 'Search for a song above'
-                            : 'No results found',
+                            : prov.error != null
+                                ? 'Search failed — check your connection'
+                                : 'No results found',
                         icon: _searchCtrl.text.isEmpty
                             ? Icons.search
                             : Icons.music_off_outlined,

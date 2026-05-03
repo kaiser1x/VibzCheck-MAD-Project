@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:uuid/uuid.dart';
 import '../models/recommendation_model.dart';
 import '../models/session_model.dart';
@@ -6,7 +7,10 @@ import '../models/song_model.dart';
 import 'spotify_service.dart';
 
 class RecommendationService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instanceFor(
+    app: Firebase.app(),
+    databaseId: 'default',
+  );
   final SpotifyService _spotify = SpotifyService();
   final _uuid = const Uuid();
 
@@ -83,8 +87,15 @@ class RecommendationService {
           (a, b) => b.scoreBreakdown.total.compareTo(a.scoreBreakdown.total),
         );
 
-    // Persist top recommendations.
+    // Clear old recommendations for this session, then save the new ones.
+    final oldDocs = await _db
+        .collection('recommendations')
+        .where('sessionId', isEqualTo: sessionId)
+        .get();
     final recBatch = _db.batch();
+    for (final doc in oldDocs.docs) {
+      recBatch.delete(doc.reference);
+    }
     for (final rec in recommendations.take(10)) {
       recBatch.set(
         _db.collection('recommendations').doc(rec.recommendationId),

@@ -52,6 +52,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '781738479375',
     projectId: 'vibzcheck-8fda7',
     authDomain: 'vibzcheck-8fda7.firebaseapp.com',
+    databaseURL: 'https://vibzcheck-8fda7-default-rtdb.firebaseio.com',
     storageBucket: 'vibzcheck-8fda7.firebasestorage.app',
     measurementId: 'G-84TQ7R0CSN',
   );
@@ -61,6 +62,7 @@ class DefaultFirebaseOptions {
     appId: '1:781738479375:android:b99690ed923a383af3387a',
     messagingSenderId: '781738479375',
     projectId: 'vibzcheck-8fda7',
+    databaseURL: 'https://vibzcheck-8fda7-default-rtdb.firebaseio.com',
     storageBucket: 'vibzcheck-8fda7.firebasestorage.app',
   );
 
@@ -69,7 +71,9 @@ class DefaultFirebaseOptions {
     appId: '1:781738479375:ios:ae6b9087a154889ef3387a',
     messagingSenderId: '781738479375',
     projectId: 'vibzcheck-8fda7',
+    databaseURL: 'https://vibzcheck-8fda7-default-rtdb.firebaseio.com',
     storageBucket: 'vibzcheck-8fda7.firebasestorage.app',
     iosBundleId: 'com.vibzcheck.vibzcheck',
   );
+
 }

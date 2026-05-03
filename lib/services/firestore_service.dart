@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:uuid/uuid.dart';
 import '../models/session_model.dart';
 import '../models/song_model.dart';
@@ -6,7 +7,10 @@ import '../models/vote_model.dart';
 import '../models/message_model.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instanceFor(
+    app: Firebase.app(),
+    databaseId: 'default',
+  );
   final _uuid = const Uuid();
 
   // ─── Sessions ──────────────────────────────────────────────────────────────

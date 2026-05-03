@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../config/app_colors.dart';
 import '../models/song_model.dart';
 import '../models/vote_model.dart';
@@ -56,6 +57,12 @@ class SongCard extends StatelessWidget {
                           .toList(),
                     ),
                   ],
+                  const SizedBox(height: 4),
+                  // Opens preview if available, otherwise opens full track on Spotify.
+                  _SpotifyLink(
+                    previewUrl: song.previewUrl,
+                    trackId: song.spotifyTrackId,
+                  ),
                 ],
               ),
             ),
@@ -167,6 +174,40 @@ class _VoteButtons extends StatelessWidget {
           visualDensity: VisualDensity.compact,
         ),
       ],
+    );
+  }
+}
+
+class _SpotifyLink extends StatelessWidget {
+  final String? previewUrl;
+  final String trackId;
+
+  const _SpotifyLink({this.previewUrl, required this.trackId});
+
+  Future<void> _open() async {
+    final uri = Uri.parse('https://open.spotify.com/track/$trackId');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _open,
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.open_in_new, size: 12, color: AppColors.onSurfaceMuted),
+          SizedBox(width: 4),
+          Text(
+            'Open in Spotify',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.onSurfaceMuted,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

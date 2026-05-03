@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../config/app_colors.dart';
 import '../models/recommendation_model.dart';
 
@@ -39,6 +40,9 @@ class RecommendationCard extends StatelessWidget {
                               color: AppColors.onSurfaceMuted, fontSize: 12),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 4),
+                      if (rec.spotifyTrackId.isNotEmpty)
+                        _SpotifyLink(trackId: rec.spotifyTrackId),
                       const SizedBox(height: 4),
                       _ScoreBar(
                           label: 'Votes',
@@ -115,6 +119,38 @@ class RecommendationCard extends StatelessWidget {
         fit: BoxFit.cover,
         errorWidget: (_, __, ___) =>
             const Icon(Icons.broken_image, color: AppColors.onSurfaceMuted),
+      ),
+    );
+  }
+}
+
+class _SpotifyLink extends StatelessWidget {
+  final String trackId;
+  const _SpotifyLink({required this.trackId});
+
+  Future<void> _open() async {
+    final uri = Uri.parse('https://open.spotify.com/track/$trackId');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _open,
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.open_in_new, size: 12, color: AppColors.onSurfaceMuted),
+          SizedBox(width: 4),
+          Text(
+            'Open in Spotify',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.onSurfaceMuted,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ],
       ),
     );
   }

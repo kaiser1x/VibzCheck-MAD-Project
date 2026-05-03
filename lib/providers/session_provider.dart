@@ -10,7 +10,6 @@ class SessionProvider extends ChangeNotifier {
   List<SessionModel> _sessions = [];
   bool _loading = false;
   String? _error;
-
   StreamSubscription<List<SessionModel>>? _sessionsSub;
   StreamSubscription<SessionModel?>? _currentSub;
 

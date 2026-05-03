@@ -108,7 +108,12 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
           Expanded(
             child: recProv.loading
                 ? const AppLoading()
-                : recProv.recommendations.isEmpty
+                : recProv.error != null
+                    ? AppErrorWidget(
+                        message: recProv.error!,
+                        onRetry: _refresh,
+                      )
+                    : recProv.recommendations.isEmpty
                     ? AppEmptyState(
                         message:
                             'No recommendations yet.\nTap refresh to generate some!',

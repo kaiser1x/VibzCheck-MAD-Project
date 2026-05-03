@@ -20,20 +20,21 @@ class SessionDetailScreen extends StatefulWidget {
 }
 
 class _SessionDetailScreenState extends State<SessionDetailScreen> {
-  int _tab = 0;
-  String _uid = ''; // cached so dispose() can't access a deactivated context
+  int _tab = 0; // 0=playlist, 1=chat, 2=recommendations
 
   @override
   void initState() {
     super.initState();
-    _uid = context.read<AuthProvider>().user?.uid ?? '';
+    final uid = context.read<AuthProvider>().user?.uid ?? '';
     context.read<SongProvider>().listenToSongs(widget.sessionId);
-    context.read<SessionProvider>().joinSession(widget.sessionId, _uid);
+    // Ensure the user is listed as active in this session.
+    context.read<SessionProvider>().joinSession(widget.sessionId, uid);
   }
 
   @override
   void dispose() {
-    context.read<SessionProvider>().leaveSession(_uid);
+    final uid = context.read<AuthProvider>().user?.uid ?? '';
+    context.read<SessionProvider>().leaveSession(uid);
     super.dispose();
   }
 
@@ -52,25 +53,25 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                 style: const TextStyle(
                     fontWeight: FontWeight.w700, fontSize: 16)),
             Text(
-              '${session.activeUsers.length} '
-              'listener${session.activeUsers.length == 1 ? '' : 's'}',
+              '${session.activeUsers.length} listener${session.activeUsers.length == 1 ? '' : 's'}',
               style: const TextStyle(
                   fontSize: 11, color: AppColors.onSurfaceMuted),
             ),
           ],
         ),
         actions: [
+          // Copy session ID for sharing
           IconButton(
             icon: const Icon(Icons.share_outlined),
             tooltip: 'Share Session ID',
             onPressed: () {
-              Clipboard.setData(ClipboardData(text: widget.sessionId));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Session ID copied to clipboard')),
-              );
+              Clipboard.setData(
+                  ClipboardData(text: widget.sessionId));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Session ID copied to clipboard')));
             },
           ),
+          // Mood picker
           IconButton(
             icon: Icon(Icons.mood,
                 color: AppColors.moodColor(session.currentMood.name)),
@@ -112,18 +113,20 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
               index: _tab,
               children: [
                 _PlaylistTab(sessionId: widget.sessionId),
-                // Chat and Recommendations are full screens pushed onto the
-                // stack.  _LazyScreen fires the push once per tab activation
-                // and resets when the tab goes inactive so re-tapping works.
+                // Chat tab — pushes chat screen; resets after pop so
+                // the user can re-enter by tapping the tab again.
                 _LazyScreen(
                   active: _tab == 1,
-                  onActivate: () => context
-                      .push('/session/${widget.sessionId}/chat'),
+                  navigate: () =>
+                      context.push('/session/${widget.sessionId}/chat'),
+                  onReturn: () => setState(() => _tab = 0),
                 ),
+                // Recommendations tab — same re-entrant pattern.
                 _LazyScreen(
                   active: _tab == 2,
-                  onActivate: () => context
+                  navigate: () => context
                       .push('/session/${widget.sessionId}/recommendations'),
+                  onReturn: () => setState(() => _tab = 0),
                 ),
               ],
             ),
@@ -172,7 +175,9 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                         selected: session.currentMood == m,
                         onTap: () {
                           Navigator.pop(context);
-                          context.read<SessionProvider>().updateMood(m);
+                          context
+                              .read<SessionProvider>()
+                              .updateMood(m);
                         },
                       ))
                   .toList(),
@@ -184,8 +189,6 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
     );
   }
 }
-
-// ── Playlist tab ──────────────────────────────────────────────────────────────
 
 class _PlaylistTab extends StatelessWidget {
   final String sessionId;
@@ -210,15 +213,17 @@ class _PlaylistTab extends StatelessWidget {
   }
 }
 
-// ── Lazy navigation trigger ───────────────────────────────────────────────────
-// Pushes a route once when [active] becomes true, resets when it becomes
-// false so tapping the tab again after returning works correctly.
-
+// Pushes a route when the tab becomes active. Resets after the user pops
+// back so tapping the tab again re-opens the screen correctly.
 class _LazyScreen extends StatefulWidget {
   final bool active;
-  final VoidCallback onActivate;
-
-  const _LazyScreen({required this.active, required this.onActivate});
+  final Future<void> Function() navigate;
+  final VoidCallback onReturn;
+  const _LazyScreen({
+    required this.active,
+    required this.navigate,
+    required this.onReturn,
+  });
 
   @override
   State<_LazyScreen> createState() => _LazyScreenState();
@@ -230,21 +235,25 @@ class _LazyScreenState extends State<_LazyScreen> {
   @override
   void didUpdateWidget(_LazyScreen old) {
     super.didUpdateWidget(old);
-    if (!widget.active) {
-      _triggered = false; // reset so next activation re-fires
-    } else if (!_triggered) {
+    if (widget.active && !_triggered) {
       _triggered = true;
-      // Schedule after the current frame so the widget tree is stable.
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => widget.onActivate());
+      _go();
+    }
+  }
+
+  Future<void> _go() async {
+    await Future.delayed(Duration.zero);
+    if (!mounted) return;
+    await widget.navigate();
+    if (mounted) {
+      setState(() => _triggered = false);
+      widget.onReturn();
     }
   }
 
   @override
   Widget build(BuildContext context) => const SizedBox.shrink();
 }
-
-// ── Tab item ──────────────────────────────────────────────────────────────────
 
 class _TabItem extends StatelessWidget {
   final String label;

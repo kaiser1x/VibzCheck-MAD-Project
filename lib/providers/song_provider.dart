@@ -92,32 +92,42 @@ class SongProvider extends ChangeNotifier {
     await _fs.addMoodTagToSong(sessionId, songId, tag);
   }
 
-  /// Debounced Spotify search — waits 400 ms after the last keystroke
-  /// before firing a Cloud Function request.
+  int _searchGen = 0;
+  String _lastSearchedQuery = '';
+
   Future<void> searchSpotify(String query) async {
-    _debounce?.cancel();
-    if (query.trim().isEmpty) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
       _searchResults = [];
+      _lastSearchedQuery = '';
       notifyListeners();
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 400), () async {
-      _searching = true;
-      notifyListeners();
-      try {
-        _searchResults = await _spotify.searchTracks(query);
-      } catch (e) {
-        _error = e.toString();
-      } finally {
+    if (trimmed == _lastSearchedQuery && _searchResults.isNotEmpty) return;
+    final gen = ++_searchGen;
+    _searching = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final results = await _spotify.searchTracks(trimmed);
+      if (gen != _searchGen) return;
+      _searchResults = results;
+      _lastSearchedQuery = trimmed;
+    } catch (e) {
+      if (gen != _searchGen) return;
+      _error = e.toString();
+    } finally {
+      if (gen == _searchGen) {
         _searching = false;
         notifyListeners();
       }
-    });
+    }
   }
 
   void clearSearch() {
     _debounce?.cancel();
     _searchResults = [];
+    _lastSearchedQuery = '';
     notifyListeners();
   }
 
