@@ -21,7 +21,6 @@ class SessionDetailScreen extends StatefulWidget {
 
 class _SessionDetailScreenState extends State<SessionDetailScreen> {
   int _tab = 0; // 0=playlist, 1=chat, 2=recommendations
-  bool _leftExplicitly = false;
 
   @override
   void initState() {
@@ -33,11 +32,6 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
 
   @override
   void dispose() {
-    // Only auto-leave if the user didn't already leave via the button.
-    if (!_leftExplicitly) {
-      final uid = context.read<AuthProvider>().user?.uid ?? '';
-      context.read<SessionProvider>().leaveSession(uid);
-    }
     super.dispose();
   }
 
@@ -167,7 +161,6 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              _leftExplicitly = true;
               final uid = context.read<AuthProvider>().user?.uid ?? '';
               await context.read<SessionProvider>().leaveSession(uid);
               if (context.mounted) context.go('/home');
