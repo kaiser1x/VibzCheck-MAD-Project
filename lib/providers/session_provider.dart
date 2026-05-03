@@ -20,9 +20,9 @@ class SessionProvider extends ChangeNotifier {
 
   // ── Sessions list ──────────────────────────────────────────────────────────
 
-  void listenToSessions() {
+  void listenToSessions(String uid) {
     _sessionsSub?.cancel();
-    _sessionsSub = _service.sessionsStream().listen((list) {
+    _sessionsSub = _service.sessionsStream(uid).listen((list) {
       _sessions = list;
       notifyListeners();
     });

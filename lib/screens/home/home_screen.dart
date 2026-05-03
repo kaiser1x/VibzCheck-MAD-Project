@@ -18,7 +18,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<SessionProvider>().listenToSessions();
+    final uid = context.read<AuthProvider>().user?.uid ?? '';
+    context.read<SessionProvider>().listenToSessions(uid);
   }
 
   @override

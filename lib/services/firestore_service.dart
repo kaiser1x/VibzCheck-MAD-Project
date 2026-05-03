@@ -33,8 +33,9 @@ class FirestoreService {
     return session;
   }
 
-  Stream<List<SessionModel>> sessionsStream() => _db
+  Stream<List<SessionModel>> sessionsStream(String uid) => _db
       .collection('sessions')
+      .where('activeUsers', arrayContains: uid)
       .orderBy('createdAt', descending: true)
       .snapshots()
       .map((s) => s.docs.map(SessionModel.fromFirestore).toList());
