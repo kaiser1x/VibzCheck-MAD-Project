@@ -65,8 +65,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
             icon: const Icon(Icons.share_outlined),
             tooltip: 'Share Session ID',
             onPressed: () {
-              Clipboard.setData(
-                  ClipboardData(text: widget.sessionId));
+              Clipboard.setData(ClipboardData(text: widget.sessionId));
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text('Session ID copied to clipboard')));
             },
@@ -77,6 +76,12 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                 color: AppColors.moodColor(session.currentMood.name)),
             tooltip: 'Change Mood',
             onPressed: () => _showMoodPicker(context, session),
+          ),
+          // Leave session
+          IconButton(
+            icon: const Icon(Icons.exit_to_app_outlined, color: AppColors.error),
+            tooltip: 'Leave Session',
+            onPressed: () => _confirmLeave(context),
           ),
         ],
       ),
@@ -142,6 +147,32 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
               child: const Icon(Icons.add),
             )
           : null,
+    );
+  }
+
+  void _confirmLeave(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Leave Session?'),
+        content: const Text('You can rejoin later with the session ID.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final uid = context.read<AuthProvider>().user?.uid ?? '';
+              await context.read<SessionProvider>().leaveSession(uid);
+              if (context.mounted) context.go('/home');
+            },
+            child: const Text('Leave',
+                style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
     );
   }
 
