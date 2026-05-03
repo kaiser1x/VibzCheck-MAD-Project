@@ -36,7 +36,7 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
     if (!mounted) return;
     final session = context.read<SessionProvider>().current;
     if (session != null) {
-      context.go('/session/${session.sessionId}');
+      context.push('/session/${session.sessionId}');
     }
   }
 
